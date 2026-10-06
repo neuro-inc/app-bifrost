@@ -1,0 +1,617 @@
+{
+  "$defs": {
+    "ApoloFilesPath": {
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string",
+          "x-description": "Provide the Apolo Storage path starting with `storage:` to locate your files.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Storage Path"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "ApoloFilesPath",
+      "type": "object",
+      "x-description": "Specify the path within the Apolo Files application to read from or write to.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "Apolo Files Path",
+      "x-type": "ApoloFilesPath"
+    },
+    "ApoloSecret": {
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "title": "ApoloSecret",
+      "type": "object",
+      "x-description": "Apolo Secret Configuration.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "Secret",
+      "x-type": "ApoloSecret"
+    },
+    "HuggingFaceCache": {
+      "properties": {
+        "files_path": {
+          "$ref": "#/$defs/ApoloFilesPath",
+          "default": {
+            "path": "storage:.apps/hugging-face-cache",
+            "__type__": "ApoloFilesPath"
+          },
+          "x-description": "The path to the Apolo Files directory where Hugging Face artifacts are cached.",
+          "x-title": "Files Path"
+        }
+      },
+      "title": "HuggingFaceCache",
+      "type": "object",
+      "x-description": "Configuration for the Hugging Face cache.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "integration",
+      "x-title": "Hugging Face Cache",
+      "x-type": "HuggingFaceCache"
+    },
+    "HuggingFaceModel": {
+      "properties": {
+        "model_hf_name": {
+          "title": "Model Hf Name",
+          "type": "string",
+          "x-description": "The name of the Hugging Face model.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Hugging Face Model Name"
+        },
+        "hf_token": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HuggingFaceToken"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "x-description": "Provide a Hugging Face API token linked to an account with access to the model specified above. This token will be used to download model files from the Hugging Face Hub, including gated or private repositories where applicable.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "integration",
+          "x-title": "Hugging Face Token"
+        },
+        "hf_cache": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HuggingFaceCache"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "x-description": "Enables caching of model files to reduce redundant downloads and speed up load times.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Model Cache"
+        }
+      },
+      "required": [
+        "model_hf_name"
+      ],
+      "title": "HuggingFaceModel",
+      "type": "object",
+      "x-description": "Configure the Hugging Face model. Ensure it is available on the Hugging Face Hub and provide an API token with access rights if the repository is gated.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "integration",
+      "x-title": "Hugging Face Model",
+      "x-type": "HuggingFaceModel"
+    },
+    "HuggingFaceToken": {
+      "properties": {
+        "token_name": {
+          "minLength": 0,
+          "title": "Token Name",
+          "type": "string",
+          "x-description": "The name of the Hugging Face token.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Token Name"
+        },
+        "token": {
+          "$ref": "#/$defs/ApoloSecret",
+          "x-description": "The Hugging Face API token used to access models.",
+          "x-title": "Hugging Face Token"
+        }
+      },
+      "required": [
+        "token_name",
+        "token"
+      ],
+      "title": "HuggingFaceToken",
+      "type": "object",
+      "x-description": "Provide a Hugging Face API token linked to an account with access to the model specified above. This token will be used to download model files from the Hugging Face Hub, including gated or private repositories where applicable.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "integration",
+      "x-title": "Hugging Face Token",
+      "x-type": "HuggingFaceToken"
+    },
+    "OpenAICompatChatAPI": {
+      "properties": {
+        "host": {
+          "title": "Host",
+          "type": "string",
+          "x-description": "The hostname of the HTTP endpoint.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Hostname"
+        },
+        "port": {
+          "default": 80,
+          "exclusiveMinimum": 0,
+          "title": "Port",
+          "type": "integer",
+          "x-description": "The port of the HTTP endpoint.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Port"
+        },
+        "protocol": {
+          "default": "http",
+          "title": "Protocol",
+          "type": "string",
+          "x-description": "The protocol to use, e.g., http or https.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Protocol"
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 30.0,
+          "title": "Timeout",
+          "x-description": "Connection timeout in seconds.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Connection Timeout"
+        },
+        "base_path": {
+          "default": "/",
+          "title": "Base Path",
+          "type": "string"
+        },
+        "api_type": {
+          "const": "rest",
+          "default": "rest",
+          "title": "Api Type",
+          "type": "string"
+        },
+        "api_base_path": {
+          "default": "/v1",
+          "title": "Api Base Path",
+          "type": "string"
+        },
+        "openai_api_type": {
+          "const": "chat",
+          "default": "chat",
+          "title": "Openai Api Type",
+          "type": "string"
+        },
+        "endpoint_url": {
+          "const": "/v1/chat",
+          "default": "/v1/chat",
+          "title": "Endpoint Url",
+          "type": "string"
+        },
+        "hf_model": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HuggingFaceModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "x-description": "Configure the Hugging Face model. Ensure it is available on the Hugging Face Hub and provide an API token with access rights if the repository is gated.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "integration",
+          "x-title": "Hugging Face Model"
+        }
+      },
+      "required": [
+        "host"
+      ],
+      "title": "OpenAICompatChatAPI",
+      "type": "object",
+      "x-description": "Configuration for OpenAI compatible chat API.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "integration",
+      "x-title": "OpenAI Compatible Chat API",
+      "x-type": "OpenAICompatChatAPI"
+    },
+    "RestAPI": {
+      "properties": {
+        "host": {
+          "title": "Host",
+          "type": "string",
+          "x-description": "The hostname of the HTTP endpoint.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Hostname"
+        },
+        "port": {
+          "default": 80,
+          "exclusiveMinimum": 0,
+          "title": "Port",
+          "type": "integer",
+          "x-description": "The port of the HTTP endpoint.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Port"
+        },
+        "protocol": {
+          "default": "http",
+          "title": "Protocol",
+          "type": "string",
+          "x-description": "The protocol to use, e.g., http or https.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Protocol"
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 30.0,
+          "title": "Timeout",
+          "x-description": "Connection timeout in seconds.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Connection Timeout"
+        },
+        "base_path": {
+          "default": "/",
+          "title": "Base Path",
+          "type": "string"
+        },
+        "api_type": {
+          "const": "rest",
+          "default": "rest",
+          "title": "Api Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "host"
+      ],
+      "title": "RestAPI",
+      "type": "object",
+      "x-description": "HTTP API Configuration.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "HTTP API",
+      "x-type": "RestAPI"
+    },
+    "ServiceAPI_OpenAICompatChatAPI_": {
+      "properties": {
+        "internal_url": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OpenAICompatChatAPI"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "x-description": "Internal URL to access the service. This route is not protected by platform authorization and only workloads from the same project can access it.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Internal URL"
+        },
+        "external_url": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OpenAICompatChatAPI"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "x-description": "External URL for accessing the service from outside the cluster. This route might be secured by platform authorization and is accessible from any network with a valid platform authorization token that has appropriate permissions.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "External URL"
+        }
+      },
+      "title": "ServiceAPI[OpenAICompatChatAPI]",
+      "type": "object",
+      "x-description": "Service APIs URLs.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "Service APIs",
+      "x-type": "ServiceAPI[OpenAICompatChatAPI]"
+    },
+    "ServiceAPI_RestAPI_": {
+      "properties": {
+        "internal_url": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RestAPI"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "x-description": "Internal URL to access the service. This route is not protected by platform authorization and only workloads from the same project can access it.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Internal URL"
+        },
+        "external_url": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RestAPI"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "x-description": "External URL for accessing the service from outside the cluster. This route might be secured by platform authorization and is accessible from any network with a valid platform authorization token that has appropriate permissions.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "External URL"
+        }
+      },
+      "title": "ServiceAPI[RestAPI]",
+      "type": "object",
+      "x-description": "Service APIs URLs.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "Service APIs",
+      "x-type": "ServiceAPI[RestAPI]"
+    },
+    "ServiceAPI_WebApp_": {
+      "properties": {
+        "internal_url": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WebApp"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "x-description": "Internal URL to access the service. This route is not protected by platform authorization and only workloads from the same project can access it.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Internal URL"
+        },
+        "external_url": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WebApp"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "x-description": "External URL for accessing the service from outside the cluster. This route might be secured by platform authorization and is accessible from any network with a valid platform authorization token that has appropriate permissions.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "External URL"
+        }
+      },
+      "title": "ServiceAPI[WebApp]",
+      "type": "object",
+      "x-description": "Service APIs URLs.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "Service APIs",
+      "x-type": "ServiceAPI[WebApp]"
+    },
+    "WebApp": {
+      "properties": {
+        "host": {
+          "title": "Host",
+          "type": "string",
+          "x-description": "The hostname of the HTTP endpoint.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Hostname"
+        },
+        "port": {
+          "default": 80,
+          "exclusiveMinimum": 0,
+          "title": "Port",
+          "type": "integer",
+          "x-description": "The port of the HTTP endpoint.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Port"
+        },
+        "protocol": {
+          "default": "http",
+          "title": "Protocol",
+          "type": "string",
+          "x-description": "The protocol to use, e.g., http or https.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Protocol"
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 30.0,
+          "title": "Timeout",
+          "x-description": "Connection timeout in seconds.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Connection Timeout"
+        },
+        "base_path": {
+          "default": "/",
+          "title": "Base Path",
+          "type": "string"
+        },
+        "api_type": {
+          "const": "webapp",
+          "default": "webapp",
+          "title": "Api Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "host"
+      ],
+      "title": "WebApp",
+      "type": "object",
+      "x-description": "HTTP API Configuration.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "HTTP API",
+      "x-type": "WebApp"
+    }
+  },
+  "properties": {
+    "app_url": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ServiceAPI_WebApp_"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The main application URL for accessing the service. This is the primary endpoint users should use to access the application.",
+      "title": "Application URL"
+    },
+    "gateway_api": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ServiceAPI_RestAPI_"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "x-description": "OpenAI-compatible API of the gateway for every configured model.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "Gateway API"
+    },
+    "chat_apis": {
+      "items": {
+        "$ref": "#/$defs/ServiceAPI_OpenAICompatChatAPI_"
+      },
+      "title": "Chat Apis",
+      "type": "array",
+      "x-description": "Chat API of each vLLM model served through the gateway.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "Chat APIs"
+    },
+    "admin_username": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Admin Username",
+      "x-description": "Login for the dashboard and the management API.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "Admin Username"
+    },
+    "admin_password": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ApoloSecret"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "x-description": "Password for the dashboard and the management API.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "Admin Password"
+    }
+  },
+  "title": "BifrostAppOutputs",
+  "type": "object"
+}

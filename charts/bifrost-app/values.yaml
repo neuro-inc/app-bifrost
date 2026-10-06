@@ -8,6 +8,7 @@ bifrost:
     application: bifrost
 
   bifrost:
+    sourceOfTruth: config.json
     authConfig:
       isEnabled: true
       adminUsername: admin

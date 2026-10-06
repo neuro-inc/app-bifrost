@@ -1,0 +1,36 @@
+- app_type: bifrost
+  name: bifrost
+  title: Bifrost
+  install_type: workflow
+  helm_path: charts/bifrost-app
+  app_package_name: apolo_apps_bifrost
+  inputs:
+    schema_path: .apolo/src/apolo_apps_bifrost/schemas/BifrostAppInputs.json
+    types_name: BifrostAppInputs
+    processor: BifrostAppChartValueProcessor
+    image: ghcr.io/neuro-inc/app-bifrost
+  outputs:
+    schema_path: .apolo/src/apolo_apps_bifrost/schemas/BifrostAppOutputs.json
+    types_name: BifrostAppOutputs
+    processor: BifrostAppOutputProcessor
+    image: ghcr.io/neuro-inc/app-bifrost
+  short_description: Route LLM requests through one gateway
+  description: |
+    Bifrost is an AI gateway that puts vLLM applications of the project and hosted
+    model providers behind a single OpenAI-compatible API.
+
+    It adds virtual keys with budgets and rate limits, failover and load balancing
+    between backends, and a dashboard with request logs.
+  pub_date: "2026-10-06T00:00:00+00:00"
+  changelog:
+    file: ./CHANGELOG.md
+  tags:
+    - "LLM"
+    - "Gateway"
+    - "Inference"
+    - "vLLM"
+    - "OpenAI"
+  urls:
+    - name: Bifrost documentation
+      type: documentation
+      url: https://docs.getbifrost.ai/overview
