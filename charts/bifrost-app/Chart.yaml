@@ -1,0 +1,10 @@
+apiVersion: v2
+type: application
+name: bifrost-app
+description: Bifrost AI gateway packaged for the Apolo platform
+version: 0.1.0
+appVersion: "2.2.6"
+dependencies:
+  - name: bifrost
+    version: 2.1.43
+    repository: https://maximhq.github.io/bifrost/helm-charts

@@ -1,0 +1,33 @@
+bifrost:
+  fullnameOverride: bifrost-ci
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  podLabels:
+    platform.apolo.us/component: app
+    platform.apolo.us/preset: cpu-small
+  ingress:
+    enabled: true
+    className: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.middlewares: platform-platform-ingress-auth@kubernetescrd
+    hosts:
+      - host: bifrost--ci.apps.example.org
+        paths:
+          - path: /
+            pathType: Prefix
+            portName: http
+  env:
+    - name: BIFROST_ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: apps-secrets
+          key: bifrost-admin-password
+  bifrost:
+    encryptionKeySecret:
+      name: apps-secrets
+      key: bifrost-encryption-key

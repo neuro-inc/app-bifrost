@@ -1,0 +1,71 @@
+bifrost:
+  fullnameOverride: bifrost-ci
+  resources:
+    requests:
+      cpu: "1"
+      memory: 1Gi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  podLabels:
+    platform.apolo.us/component: app
+    platform.apolo.us/preset: cpu-medium
+  ingress:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: bifrost--ci.apps.example.org
+        paths:
+          - path: /
+            pathType: Prefix
+            portName: http
+  storage:
+    mode: postgres
+  postgresql:
+    external:
+      enabled: true
+      host: pg-ci-primary.example.svc
+      port: 5432
+      user: bifrost
+      database: bifrost
+      sslMode: require
+      existingSecret: apps-secrets
+      passwordKey: pg-ci-bifrost-password
+  env:
+    - name: BIFROST_ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: apps-secrets
+          key: bifrost-admin-password
+  bifrost:
+    encryptionKeySecret:
+      name: apps-secrets
+      key: bifrost-encryption-key
+    client:
+      enforceAuthOnInference: true
+    providerSecrets:
+      vllm-0:
+        existingSecret: apps-secrets
+        key: vllm-llama-api-key
+        envVar: VLLM_KEY_0
+    providers:
+      vllm:
+        keys:
+          - name: llama-3-1-8b-instruct
+            value: env.VLLM_KEY_0
+            models:
+              - meta-llama/Llama-3.1-8B-Instruct
+            weight: 1
+            vllm_key_config:
+              url: http://llm-inference-ci.example.svc:8000
+              model_name: meta-llama/Llama-3.1-8B-Instruct
+          - name: qwen-2-5-7b-instruct
+            value: ""
+            models:
+              - Qwen/Qwen2.5-7B-Instruct
+            weight: 1
+            vllm_key_config:
+              url: http://llm-inference-ci-2.example.svc:8000
+              model_name: Qwen/Qwen2.5-7B-Instruct
+        network_config:
+          allow_private_network: true

@@ -1,0 +1,17 @@
+bifrost:
+  image:
+    tag: v2.2.6
+
+  podLabels:
+    application: bifrost
+  deploymentLabels:
+    application: bifrost
+
+  bifrost:
+    authConfig:
+      isEnabled: true
+      adminUsername: admin
+      adminPassword: env.BIFROST_ADMIN_PASSWORD
+    client:
+      enforceAuthOnInference: false
+      dualCredentialConflictBehavior: prefer_vk
