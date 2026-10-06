@@ -19,7 +19,7 @@ packages = [
 [tool.poetry.dependencies]
 apolo-sdk = "^26.9.0"
 pydantic = "^2.13.5"
-apolo-app-types = {git = "https://github.com/neuro-inc/app-types.git", rev = "5fb627fcc56581101a8887815511b1d97eb958a1", extras = ["fixtures"]}
+apolo-app-types = {version = "26.10.1", extras = ["fixtures"]}
 
 [tool.poetry.group.dev]
 optional = true

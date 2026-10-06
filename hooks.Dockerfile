@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     POETRY_VIRTUALENVS_CREATE=0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential git \
+    build-essential \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && useradd -m -d /app app
 
