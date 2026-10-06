@@ -27,6 +27,8 @@ bifrost:
         secretKeyRef:
           name: apps-secrets
           key: bifrost-admin-password
+    - name: GOMEMLIMIT
+      value: 460MiB
   bifrost:
     encryptionKeySecret:
       name: apps-secrets
