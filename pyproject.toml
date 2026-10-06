@@ -1,0 +1,85 @@
+[project]
+name = "apolo-apps-bifrost"
+version = "0.0.1"
+description = "Apolo Bifrost application"
+authors = [
+    {name = "Apolo",email = "dev@apolo.us"}
+]
+readme = "README.md"
+dynamic = ["version"]
+requires-python = ">=3.13.0,<4.0"
+
+[tool.poetry]
+name = "apolo-apps-bifrost"
+authors = ["Apolo.us"]
+packages = [
+  { include = "apolo_apps_bifrost", from = ".apolo/src" },
+]
+
+[tool.poetry.dependencies]
+apolo-sdk = "^26.9.0"
+pydantic = "^2.13.5"
+apolo-app-types = {version = "26.10.1", extras = ["fixtures"]}
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^4.6.2"
+pytest = "^9.1.1"
+pytest-asyncio = "^1.4.0"
+pytest-cov = "^7.1.0"
+mypy = "^2.4.0"
+
+[tool.ruff]
+target-version = "py313"
+lint.select = [
+    "E", "F", "I", "C90", "UP", "B", "ASYNC", "N", "FBT", "A", "C4", "EM", "FA", "ICN",
+    "G", "PIE", "T20", "PYI", "PT", "RET", "PTH"
+]
+lint.ignore = [
+  "A003",
+  "N818"
+]
+
+[tool.ruff.lint.isort.sections]
+ApoloSDK = ["apolo-sdk"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+lines-after-imports = 2
+section-order = ["future", "standard-library", "third-party", "ApoloSDK", "first-party", "local-folder"]
+known-first-party = ["apolo_app_types"]
+known-local-folder = ["tests"]
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_untyped_defs = true
+follow_imports = "silent"
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unused_configs = true
+plugins = ['pydantic.mypy']
+exclude = [
+  "tests/"
+]
+
+[tool.coverage.report]
+fail_under = 0
+skip_empty = true
+sort = "-cover"
+omit = [
+    ".apolo/tests/*",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+log_cli = false
+log_level = "INFO"
+junit_family = "xunit2"
+testpaths = [
+  ".apolo/tests/",
+]
