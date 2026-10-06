@@ -72,7 +72,8 @@ jobs:
         env:
           BRANCH_NAME: ${{ github.head_ref }}
         run: |
-          export IMAGE_TAG=$(echo "${BRANCH_NAME}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_.-]/-/g')
+          IMAGE_TAG=$(echo "${BRANCH_NAME}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_.-]/-/g')
+          export IMAGE_TAG
           make push-hook-image
       - name: Release development image
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
