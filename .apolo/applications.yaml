@@ -22,6 +22,7 @@
     It adds virtual keys with budgets and rate limits, failover and load balancing
     between backends, and a dashboard with request logs.
   pub_date: "2026-10-06T00:00:00+00:00"
+  logo: https://storage.googleapis.com/development-421920-assets/app-logos/bifrost.svg
   changelog:
     file: ./CHANGELOG.md
   tags:
