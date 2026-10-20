@@ -4,6 +4,7 @@ import pytest
 from apolo_apps_bifrost.app_types import (
     BifrostAppInputs,
     BifrostSecurity,
+    EmbeddingsBackend,
     ExternalProvider,
     PostgresStorage,
     ProviderNames,
@@ -15,6 +16,7 @@ from apolo_app_types.protocols.common import (
     ApoloSecret,
     HuggingFaceModel,
     OpenAICompatChatAPI,
+    OpenAICompatEmbeddingsAPI,
     Preset as PresetInput,
 )
 from apolo_app_types.protocols.postgres import CrunchyPostgresUserCredentials
@@ -123,6 +125,54 @@ def full_inputs(security):
                 api_key=ApoloSecret(key="anthropic-key"),
             ),
         ],
+    )
+
+
+@pytest.fixture
+def embedding_backends():
+    return [
+        EmbeddingsBackend(
+            api=OpenAICompatEmbeddingsAPI(
+                host="tei.namespace",
+                port=80,
+                protocol="http",
+                hf_model=HuggingFaceModel(model_hf_name="BAAI/bge-small-en-v1.5"),
+            ),
+        ),
+        EmbeddingsBackend(
+            api=OpenAICompatEmbeddingsAPI(
+                host="vllm-embed.namespace",
+                port=8000,
+                protocol="http",
+                hf_model=HuggingFaceModel(
+                    model_hf_name="intfloat/multilingual-e5-small"
+                ),
+            ),
+            api_key=ApoloSecret(key="e5-api-key"),
+        ),
+    ]
+
+
+@pytest.fixture
+def models_inputs(full_inputs, embedding_backends):
+    data = full_inputs.model_dump()
+    openai, openai_second, anthropic = data["providers"]
+    return BifrostAppInputs.model_validate(
+        {
+            **data,
+            "embedding_backends": [
+                backend.model_dump() for backend in embedding_backends
+            ],
+            "providers": [
+                {
+                    **openai,
+                    "chat_models": ["gpt-4o-mini", "gpt-4.1"],
+                    "embedding_models": ["text-embedding-3-small"],
+                },
+                {**openai_second, "chat_models": ["gpt-4o-mini"]},
+                {**anthropic, "chat_models": ["claude-haiku-4-5"]},
+            ],
+        }
     )
 
 

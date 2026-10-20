@@ -1,7 +1,7 @@
 import enum
 import typing as t
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from apolo_app_types.protocols.common import (
     AbstractAppFieldType,
@@ -11,6 +11,7 @@ from apolo_app_types.protocols.common import (
     BasicNetworkingConfig,
     NoAuth,
     OpenAICompatChatAPI,
+    OpenAICompatEmbeddingsAPI,
     Preset,
     RestAPI,
     SchemaExtraMetadata,
@@ -18,6 +19,9 @@ from apolo_app_types.protocols.common import (
     ServiceAPI,
 )
 from apolo_app_types.protocols.postgres import CrunchyPostgresUserCredentials
+
+
+VLLM_PROVIDER = "vllm"
 
 
 class StorageTypes(enum.StrEnum):
@@ -84,7 +88,54 @@ class PostgresStorage(AbstractAppFieldType):
         return self
 
 
-class VLLMBackend(AbstractAppFieldType):
+class ModelBackend(AbstractAppFieldType):
+    api: OpenAICompatChatAPI | OpenAICompatEmbeddingsAPI
+    api_key: ApoloSecret | None = Field(
+        default=None,
+        json_schema_extra=SchemaExtraMetadata(
+            title="API Key",
+            description="Set it when the server is started with an API key.",
+        ).as_json_schema_extra(),
+    )
+    served_model_name: str | None = Field(
+        default=None,
+        json_schema_extra=SchemaExtraMetadata(
+            title="Served Model Name",
+            description="Set it when the server serves the model under a "
+            "name other than the Hugging Face model name.",
+            is_advanced_field=True,
+        ).as_json_schema_extra(),
+    )
+
+    @property
+    def model_name(self) -> str:
+        name = self.served_model_name or (
+            self.api.hf_model.model_hf_name if self.api.hf_model else ""
+        )
+        return name.strip()
+
+    @property
+    def url(self) -> str:
+        path = self.api.base_path.strip("/")
+        prefix = f"/{path}" if path else ""
+        return f"{self.api.protocol}://{self.api.host}:{self.api.port}{prefix}"
+
+    @property
+    def identity(self) -> tuple[str, ...]:
+        return (self.url, self.model_name, self.api_key.key if self.api_key else "")
+
+    @model_validator(mode="after")
+    def _require_model_name(self) -> t.Self:
+        if not self.model_name:
+            msg = (
+                "A backend needs either the Hugging Face model of the API "
+                "or a served model name"
+            )
+            raise ValueError(msg)
+        return self
+
+
+class VLLMBackend(ModelBackend):
     model_config = ConfigDict(
         protected_namespaces=(),
         json_schema_extra=SchemaExtraMetadata(
@@ -100,47 +151,25 @@ class VLLMBackend(AbstractAppFieldType):
             meta_type=SchemaMetaType.INTEGRATION,
         ).as_json_schema_extra(),
     )
-    api_key: ApoloSecret | None = Field(
-        default=None,
+
+
+class EmbeddingsBackend(ModelBackend):
+    model_config = ConfigDict(
+        protected_namespaces=(),
         json_schema_extra=SchemaExtraMetadata(
-            title="API Key",
-            description="Set it when the vLLM server is started with an API key.",
+            title="Embeddings Backend",
+            description="An embeddings server the gateway routes requests to.",
         ).as_json_schema_extra(),
     )
-    served_model_name: str | None = Field(
-        default=None,
+    api: OpenAICompatEmbeddingsAPI = Field(
+        ...,
         json_schema_extra=SchemaExtraMetadata(
-            title="Served Model Name",
-            description="Set it when the vLLM server serves the model under a "
-            "name other than the Hugging Face model name.",
-            is_advanced_field=True,
+            title="Embeddings API",
+            description="Embeddings API of a vLLM or Text Embeddings Inference "
+            "application in this project.",
+            meta_type=SchemaMetaType.INTEGRATION,
         ).as_json_schema_extra(),
     )
-
-    @property
-    def model_name(self) -> str:
-        name = self.served_model_name or (
-            self.api.hf_model.model_hf_name if self.api.hf_model else ""
-        )
-        return name.strip()
-
-    @property
-    def url(self) -> str:
-        return f"{self.api.protocol}://{self.api.host}:{self.api.port}"
-
-    @property
-    def identity(self) -> tuple[str, ...]:
-        return (self.url, self.model_name, self.api_key.key if self.api_key else "")
-
-    @model_validator(mode="after")
-    def _require_model_name(self) -> t.Self:
-        if not self.model_name:
-            msg = (
-                "vLLM backend needs either the Hugging Face model of the API "
-                "or a served model name"
-            )
-            raise ValueError(msg)
-        return self
 
 
 class ProviderNames(enum.StrEnum):
@@ -156,6 +185,20 @@ class ProviderNames(enum.StrEnum):
     XAI = "xai"
     HUGGINGFACE = "huggingface"
     NEBIUS = "nebius"
+
+
+EMBEDDING_PROVIDERS = frozenset(
+    {
+        ProviderNames.OPENAI,
+        ProviderNames.GEMINI,
+        ProviderNames.MISTRAL,
+        ProviderNames.COHERE,
+        ProviderNames.OPENROUTER,
+        ProviderNames.HUGGINGFACE,
+        ProviderNames.NEBIUS,
+    }
+)
+OWN_PREFIX_PROVIDERS = frozenset({ProviderNames.OPENROUTER, ProviderNames.HUGGINGFACE})
 
 
 class ExternalProvider(AbstractAppFieldType):
@@ -180,10 +223,59 @@ class ExternalProvider(AbstractAppFieldType):
             description="API key of the provider account.",
         ).as_json_schema_extra(),
     )
+    chat_models: list[str] = Field(
+        default_factory=list,
+        json_schema_extra=SchemaExtraMetadata(
+            title="Chat Models",
+            description="Models to publish as chat integrations, named as the "
+            "provider names them and without the provider prefix, for example "
+            "gpt-4o-mini. Every model of the provider is served through the "
+            "gateway API either way.",
+        ).as_json_schema_extra(),
+    )
+    embedding_models: list[str] = Field(
+        default_factory=list,
+        json_schema_extra=SchemaExtraMetadata(
+            title="Embedding Models",
+            description="Models to publish as embeddings integrations, for "
+            "example text-embedding-3-small. Not available for Anthropic, Groq, "
+            "Perplexity, Cerebras and xAI.",
+        ).as_json_schema_extra(),
+    )
 
     @property
     def identity(self) -> tuple[str, ...]:
         return (self.provider.value, self.api_key.key)
+
+    @field_validator("chat_models", "embedding_models")
+    @classmethod
+    def _strip_model_names(cls, value: list[str]) -> list[str]:
+        names = [name.strip() for name in value]
+        if not all(names):
+            msg = "Model names must not be blank"
+            raise ValueError(msg)
+        return names
+
+    @model_validator(mode="after")
+    def _require_embeddings_support(self) -> t.Self:
+        if self.embedding_models and self.provider not in EMBEDDING_PROVIDERS:
+            msg = f"The gateway serves no embeddings from {self.provider.value}"
+            raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def _reject_provider_prefix(self) -> t.Self:
+        if self.provider in OWN_PREFIX_PROVIDERS:
+            return self
+        prefix = f"{self.provider.value}/"
+        for name in [*self.chat_models, *self.embedding_models]:
+            if name.startswith(prefix):
+                msg = (
+                    f"List model {name} without the provider prefix: "
+                    f"{name.removeprefix(prefix)}"
+                )
+                raise ValueError(msg)
+        return self
 
 
 class BifrostSecurity(AbstractAppFieldType):
@@ -260,8 +352,16 @@ class BifrostAppInputs(AppInputs):
     vllm_backends: list[VLLMBackend] = Field(
         default_factory=list,
         json_schema_extra=SchemaExtraMetadata(
-            title="vLLM Backends",
-            description="vLLM applications served through the gateway.",
+            title="Chat Backends",
+            description="Chat models of vLLM applications served through the gateway.",
+        ).as_json_schema_extra(),
+    )
+    embedding_backends: list[EmbeddingsBackend] = Field(
+        default_factory=list,
+        json_schema_extra=SchemaExtraMetadata(
+            title="Embeddings Backends",
+            description="Embeddings models of vLLM or Text Embeddings Inference "
+            "applications served through the gateway.",
         ).as_json_schema_extra(),
     )
     providers: list[ExternalProvider] = Field(
@@ -273,6 +373,22 @@ class BifrostAppInputs(AppInputs):
             "restart.",
         ).as_json_schema_extra(),
     )
+
+    @property
+    def gateway_models(self) -> dict[str, list[str]]:
+        chat = [f"{VLLM_PROVIDER}/{item.model_name}" for item in self.vllm_backends]
+        embeddings = [
+            f"{VLLM_PROVIDER}/{item.model_name}" for item in self.embedding_backends
+        ]
+        for provider in self.providers:
+            chat += [f"{provider.provider}/{name}" for name in provider.chat_models]
+            embeddings += [
+                f"{provider.provider}/{name}" for name in provider.embedding_models
+            ]
+        return {
+            "chat": list(dict.fromkeys(chat)),
+            "embeddings": list(dict.fromkeys(embeddings)),
+        }
 
     @model_validator(mode="after")
     def _require_auth(self) -> t.Self:
@@ -288,9 +404,18 @@ class BifrostAppInputs(AppInputs):
         if len(set(backends)) != len(backends):
             msg = "The same vLLM backend is listed more than once"
             raise ValueError(msg)
+        backends = [backend.identity for backend in self.embedding_backends]
+        if len(set(backends)) != len(backends):
+            msg = "The same embeddings backend is listed more than once"
+            raise ValueError(msg)
         providers = [provider.identity for provider in self.providers]
         if len(set(providers)) != len(providers):
             msg = "The same provider API key is listed more than once"
+            raise ValueError(msg)
+        models = self.gateway_models
+        both = [name for name in models["chat"] if name in models["embeddings"]]
+        if both:
+            msg = f"Model {both[0]} is listed both for chat and for embeddings"
             raise ValueError(msg)
         return self
 
@@ -308,7 +433,15 @@ class BifrostAppOutputs(AppOutputs):
         default_factory=list,
         json_schema_extra=SchemaExtraMetadata(
             title="Chat APIs",
-            description="Chat API of each vLLM model served through the gateway.",
+            description="Chat API of each chat model served through the gateway.",
+        ).as_json_schema_extra(),
+    )
+    embeddings_apis: list[ServiceAPI[OpenAICompatEmbeddingsAPI]] = Field(
+        default_factory=list,
+        json_schema_extra=SchemaExtraMetadata(
+            title="Embeddings APIs",
+            description="Embeddings API of each embeddings model served through "
+            "the gateway.",
         ).as_json_schema_extra(),
     )
     admin_username: str | None = Field(

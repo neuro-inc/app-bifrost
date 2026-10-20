@@ -1,0 +1,219 @@
+{
+  "apolo_app_id": "b1aeaf654526474ba22480d00e5b0109",
+  "bifrost": {
+    "fullnameOverride": "bifrost-b1aeaf654526474ba22480d00e5b0109",
+    "resources": {
+      "requests": {
+        "cpu": "4000.0m",
+        "memory": "8192M"
+      },
+      "limits": {
+        "cpu": "4000.0m",
+        "memory": "8192M"
+      }
+    },
+    "tolerations": [
+      {
+        "effect": "NoSchedule",
+        "key": "platform.neuromation.io/job",
+        "operator": "Exists"
+      },
+      {
+        "effect": "NoExecute",
+        "key": "node.kubernetes.io/not-ready",
+        "operator": "Exists",
+        "tolerationSeconds": 300
+      },
+      {
+        "effect": "NoExecute",
+        "key": "node.kubernetes.io/unreachable",
+        "operator": "Exists",
+        "tolerationSeconds": 300
+      }
+    ],
+    "affinity": {
+      "nodeAffinity": {
+        "requiredDuringSchedulingIgnoredDuringExecution": {
+          "nodeSelectorTerms": [
+            {
+              "matchExpressions": [
+                {
+                  "key": "platform.neuromation.io/nodepool",
+                  "operator": "In",
+                  "values": [
+                    "cpu_pool"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "podLabels": {
+      "platform.apolo.us/component": "app",
+      "platform.apolo.us/preset": "gateway-large"
+    },
+    "ingress": {
+      "enabled": true,
+      "className": "traefik",
+      "annotations": {
+        "traefik.ingress.kubernetes.io/router.middlewares": "platform-platform-control-plane-ingress-auth@kubernetescrd"
+      },
+      "hosts": [
+        {
+          "host": "bifrost--b1aeaf654526474ba22480d00e5b0109.apps.some.org.neu.ro",
+          "paths": [
+            {
+              "path": "/",
+              "pathType": "Prefix",
+              "portName": "http"
+            }
+          ]
+        }
+      ]
+    },
+    "storage": {
+      "mode": "postgres"
+    },
+    "postgresql": {
+      "external": {
+        "enabled": true,
+        "host": "pg-app-primary.namespace.svc",
+        "port": 5432,
+        "user": "bifrost",
+        "database": "bifrost",
+        "sslMode": "require",
+        "existingSecret": "apps-secrets",
+        "passwordKey": "pg-bifrost-password"
+      }
+    },
+    "env": [
+      {
+        "name": "BIFROST_ADMIN_PASSWORD",
+        "valueFrom": {
+          "secretKeyRef": {
+            "name": "apps-secrets",
+            "key": "bifrost-admin-password"
+          }
+        }
+      },
+      {
+        "name": "GOMEMLIMIT",
+        "value": "7031MiB"
+      }
+    ],
+    "bifrost": {
+      "encryptionKeySecret": {
+        "name": "apps-secrets",
+        "key": "bifrost-encryption-key"
+      },
+      "authConfig": {
+        "adminUsername": "admin"
+      },
+      "client": {
+        "enforceAuthOnInference": true,
+        "maxRequestBodySizeMb": 100
+      },
+      "providerSecrets": {
+        "key-0": {
+          "existingSecret": "apps-secrets",
+          "key": "openai-key",
+          "envVar": "BIFROST_PROVIDER_KEY_0"
+        },
+        "key-1": {
+          "existingSecret": "apps-secrets",
+          "key": "openai-key-2",
+          "envVar": "BIFROST_PROVIDER_KEY_1"
+        },
+        "key-2": {
+          "existingSecret": "apps-secrets",
+          "key": "anthropic-key",
+          "envVar": "BIFROST_PROVIDER_KEY_2"
+        },
+        "key-3": {
+          "existingSecret": "apps-secrets",
+          "key": "llama-api-key",
+          "envVar": "BIFROST_PROVIDER_KEY_3"
+        }
+      },
+      "providers": {
+        "openai": {
+          "keys": [
+            {
+              "name": "openai-openai-key-865a1626c0ef",
+              "value": "env.BIFROST_PROVIDER_KEY_0",
+              "models": [
+                "*"
+              ],
+              "weight": 1
+            },
+            {
+              "name": "openai-openai-key-2-b759decfb60c",
+              "value": "env.BIFROST_PROVIDER_KEY_1",
+              "models": [
+                "*"
+              ],
+              "weight": 1
+            }
+          ]
+        },
+        "anthropic": {
+          "keys": [
+            {
+              "name": "anthropic-anthropic-key-7da5b1c1a541",
+              "value": "env.BIFROST_PROVIDER_KEY_2",
+              "models": [
+                "*"
+              ],
+              "weight": 1
+            }
+          ]
+        },
+        "vllm": {
+          "keys": [
+            {
+              "name": "vllm-meta-llama-llama-3-1-8b-instruct-99423d51fb0b",
+              "value": "env.BIFROST_PROVIDER_KEY_3",
+              "models": [
+                "meta-llama/Llama-3.1-8B-Instruct"
+              ],
+              "weight": 1,
+              "vllm_key_config": {
+                "url": "http://llama.namespace:8000",
+                "model_name": "meta-llama/Llama-3.1-8B-Instruct"
+              }
+            },
+            {
+              "name": "vllm-meta-llama-llama-3-1-8b-instruct-056d09bfba79",
+              "value": "",
+              "models": [
+                "meta-llama/Llama-3.1-8B-Instruct"
+              ],
+              "weight": 1,
+              "vllm_key_config": {
+                "url": "http://llama-second.namespace:8000",
+                "model_name": "meta-llama/Llama-3.1-8B-Instruct"
+              }
+            },
+            {
+              "name": "vllm-qwen-f6f119267977",
+              "value": "",
+              "models": [
+                "qwen"
+              ],
+              "weight": 1,
+              "vllm_key_config": {
+                "url": "http://qwen.namespace:8000",
+                "model_name": "qwen"
+              }
+            }
+          ],
+          "network_config": {
+            "allow_private_network": true
+          }
+        }
+      }
+    }
+  }
+}
