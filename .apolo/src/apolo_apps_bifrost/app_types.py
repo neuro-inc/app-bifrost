@@ -228,10 +228,10 @@ class ExternalProvider(AbstractAppFieldType):
         default_factory=list,
         json_schema_extra=SchemaExtraMetadata(
             title="Chat Models",
-            description="Models to publish as chat integrations, named as the "
-            "provider names them and without the provider prefix, for example "
-            "gpt-4o-mini. Every model of the provider is served through the "
-            "gateway API either way.",
+            description="Models to publish as chat integrations and in the "
+            "OpenAI compatible API, named as the provider names them and "
+            "without the provider prefix, for example gpt-4o-mini. Every model "
+            "of the provider is still served through the gateway API.",
         ).as_json_schema_extra(),
     )
     embedding_models: list[str] = Field(

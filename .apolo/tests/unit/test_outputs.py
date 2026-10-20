@@ -166,7 +166,6 @@ async def test_v26_10_1_inputs_keep_their_values_and_outputs(setup_clients):
     assert outputs.pop("embeddings_apis") == []
     openai_api = outputs.pop("openai_api")
     assert openai_api["internal_url"]["models"] == V26_10_1_OPENAI_MODELS
-    assert openai_api["internal_url"]["model_prefixes"] == ["openai/", "anthropic/"]
     assert outputs == expected_outputs
 
 
@@ -179,7 +178,6 @@ async def test_outputs_from_v26_10_1_values():
     openai_api = outputs.pop("openai_api")
     assert openai_api["internal_url"]["models"] == V26_10_1_OPENAI_MODELS
     assert openai_api["external_url"]["models"] == V26_10_1_OPENAI_MODELS
-    assert openai_api["internal_url"]["model_prefixes"] == ["openai/", "anthropic/"]
     assert outputs == load("v26.10.1-outputs.json")
 
 
@@ -211,7 +209,6 @@ async def test_openai_api_lists_every_model_with_its_capabilities(
         assert url["__type__"] == "OpenAICompatAPI"
         assert (url["host"], url["port"], url["protocol"]) == (host, port, protocol)
         assert (url["base_path"], url["api_base_path"]) == ("/", "/v1")
-        assert url["model_prefixes"] == ["openai/", "anthropic/"]
         assert url["models"] == api["internal_url"]["models"]
 
 
@@ -224,7 +221,6 @@ async def test_openai_api_without_models(setup_clients, minimal_inputs):
 
     assert outputs["openai_api"]["internal_url"]["host"] == INTERNAL_HOST
     assert outputs["openai_api"]["internal_url"]["models"] == []
-    assert outputs["openai_api"]["internal_url"]["model_prefixes"] == []
 
 
 async def test_openai_api_validates_as_the_integration_type(

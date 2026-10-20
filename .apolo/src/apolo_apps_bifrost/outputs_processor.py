@@ -70,11 +70,6 @@ def _get_gateway_models(
     return t.cast(dict[str, list[str]], models)
 
 
-def _get_providers(chart_values: dict[str, t.Any]) -> list[str]:
-    providers = (chart_values.get("bifrost") or {}).get("providers") or {}
-    return [name for name in providers if name != VLLM_PROVIDER]
-
-
 def _get_openai_models(models: dict[str, list[str]]) -> list[OpenAICompatModel]:
     vllm_prefix = f"{VLLM_PROVIDER}/"
     return [
@@ -136,10 +131,7 @@ class BifrostAppOutputProcessor(BaseAppOutputsProcessor[BifrostAppOutputs]):
         )
 
         models = _get_gateway_models(helm_values, chart_values)
-        openai_fields = {
-            "models": _get_openai_models(models),
-            "model_prefixes": [f"{name}/" for name in _get_providers(chart_values)],
-        }
+        openai_models = _get_openai_models(models)
 
         auth_config = (chart_values.get("bifrost") or {}).get("authConfig") or {}
         return BifrostAppOutputs(
@@ -154,8 +146,8 @@ class BifrostAppOutputProcessor(BaseAppOutputsProcessor[BifrostAppOutputs]):
                 else None,
             ),
             openai_api=ServiceAPI[OpenAICompatAPI](
-                internal_url=OpenAICompatAPI(**internal, **openai_fields),
-                external_url=OpenAICompatAPI(**external, **openai_fields)
+                internal_url=OpenAICompatAPI(**internal, models=openai_models),
+                external_url=OpenAICompatAPI(**external, models=openai_models)
                 if external
                 else None,
             ),

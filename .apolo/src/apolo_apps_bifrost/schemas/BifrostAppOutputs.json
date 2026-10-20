@@ -227,18 +227,6 @@
           "x-is-configurable": true,
           "x-meta-type": "inline",
           "x-title": "Models"
-        },
-        "model_prefixes": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Model Prefixes",
-          "type": "array",
-          "x-description": "Prefixes such as openai/: any model name that starts with one is served too.",
-          "x-is-advanced-field": false,
-          "x-is-configurable": true,
-          "x-meta-type": "inline",
-          "x-title": "Model Prefixes"
         }
       },
       "required": [
@@ -483,7 +471,7 @@
           },
           "title": "Capabilities",
           "type": "array",
-          "x-description": "Endpoints that serve the model, such as chat, completions, responses or embeddings. Other values can appear.",
+          "x-description": "Endpoints that serve the model, such as chat, embeddings, rerank or speech. Other values can appear.",
           "x-is-advanced-field": false,
           "x-is-configurable": true,
           "x-meta-type": "inline",
