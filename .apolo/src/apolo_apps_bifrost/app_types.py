@@ -10,6 +10,7 @@ from apolo_app_types.protocols.common import (
     AppOutputs,
     BasicNetworkingConfig,
     NoAuth,
+    OpenAICompatAPI,
     OpenAICompatChatAPI,
     OpenAICompatEmbeddingsAPI,
     Preset,
@@ -427,6 +428,15 @@ class BifrostAppOutputs(AppOutputs):
             title="Gateway API",
             description="OpenAI-compatible API of the gateway for every "
             "configured model.",
+        ).as_json_schema_extra(),
+    )
+    openai_api: ServiceAPI[OpenAICompatAPI] | None = Field(
+        default=None,
+        json_schema_extra=SchemaExtraMetadata(
+            title="OpenAI Compatible API",
+            description="OpenAI-compatible API of the gateway with the models it "
+            "serves and the endpoints of each. Usable as an integration by "
+            "applications that pick models themselves.",
         ).as_json_schema_extra(),
     )
     chat_apis: list[ServiceAPI[OpenAICompatChatAPI]] = Field(

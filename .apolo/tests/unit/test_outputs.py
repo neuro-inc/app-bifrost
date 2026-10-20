@@ -5,6 +5,9 @@ from apolo_app_types_fixtures.constants import APP_ID
 from apolo_apps_bifrost.app_types import BifrostAppInputs
 from apolo_apps_bifrost.outputs_processor import BifrostAppOutputProcessor
 
+from apolo_app_types.protocols.common import OpenAICompatAPI, OpenAICompatCapability
+from apolo_app_types.protocols.common.openai_compat import get_api_base_url
+
 from ..conftest import NAMESPACE
 from .test_inputs import generate
 
@@ -20,6 +23,24 @@ def load(name):
 
 def model_names(apis):
     return [api["internal_url"]["hf_model"]["model_hf_name"] for api in apis]
+
+
+VLLM_CHAT = ["chat", "completions", "responses"]
+V26_10_1_OPENAI_MODELS = [
+    {
+        "name": "vllm/meta-llama/Llama-3.1-8B-Instruct",
+        "capabilities": VLLM_CHAT,
+        "__type__": "OpenAICompatModel",
+    },
+    {"name": "vllm/qwen", "capabilities": VLLM_CHAT, "__type__": "OpenAICompatModel"},
+]
+
+
+def openai_models(api):
+    return [
+        (model["name"], model["capabilities"])
+        for model in api["internal_url"]["models"]
+    ]
 
 
 async def test_outputs_from_generated_values(setup_clients, full_inputs):
@@ -143,6 +164,9 @@ async def test_v26_10_1_inputs_keep_their_values_and_outputs(setup_clients):
     }
     assert values == expected_values
     assert outputs.pop("embeddings_apis") == []
+    openai_api = outputs.pop("openai_api")
+    assert openai_api["internal_url"]["models"] == V26_10_1_OPENAI_MODELS
+    assert openai_api["internal_url"]["model_prefixes"] == ["openai/", "anthropic/"]
     assert outputs == expected_outputs
 
 
@@ -152,4 +176,70 @@ async def test_outputs_from_v26_10_1_values():
     )
 
     assert outputs.pop("embeddings_apis") == []
+    openai_api = outputs.pop("openai_api")
+    assert openai_api["internal_url"]["models"] == V26_10_1_OPENAI_MODELS
+    assert openai_api["external_url"]["models"] == V26_10_1_OPENAI_MODELS
+    assert openai_api["internal_url"]["model_prefixes"] == ["openai/", "anthropic/"]
     assert outputs == load("v26.10.1-outputs.json")
+
+
+async def test_openai_api_lists_every_model_with_its_capabilities(
+    setup_clients, models_inputs
+):
+    values = await generate(setup_clients, models_inputs)
+
+    outputs = await BifrostAppOutputProcessor().generate_outputs(
+        helm_values=values, app_instance_id="bifrost-app"
+    )
+
+    api = outputs["openai_api"]
+    assert api["__type__"] == "ServiceAPI[OpenAICompatAPI]"
+    assert openai_models(api) == [
+        ("vllm/meta-llama/Llama-3.1-8B-Instruct", VLLM_CHAT),
+        ("vllm/qwen", VLLM_CHAT),
+        ("openai/gpt-4o-mini", ["chat"]),
+        ("openai/gpt-4.1", ["chat"]),
+        ("anthropic/claude-haiku-4-5", ["chat"]),
+        ("vllm/BAAI/bge-small-en-v1.5", ["embeddings"]),
+        ("vllm/intfloat/multilingual-e5-small", ["embeddings"]),
+        ("openai/text-embedding-3-small", ["embeddings"]),
+    ]
+    for url, host, port, protocol in (
+        (api["internal_url"], INTERNAL_HOST, 8080, "http"),
+        (api["external_url"], EXTERNAL_HOST, 443, "https"),
+    ):
+        assert url["__type__"] == "OpenAICompatAPI"
+        assert (url["host"], url["port"], url["protocol"]) == (host, port, protocol)
+        assert (url["base_path"], url["api_base_path"]) == ("/", "/v1")
+        assert url["model_prefixes"] == ["openai/", "anthropic/"]
+        assert url["models"] == api["internal_url"]["models"]
+
+
+async def test_openai_api_without_models(setup_clients, minimal_inputs):
+    values = await generate(setup_clients, minimal_inputs)
+
+    outputs = await BifrostAppOutputProcessor().generate_outputs(
+        helm_values=values, app_instance_id="bifrost-app"
+    )
+
+    assert outputs["openai_api"]["internal_url"]["host"] == INTERNAL_HOST
+    assert outputs["openai_api"]["internal_url"]["models"] == []
+    assert outputs["openai_api"]["internal_url"]["model_prefixes"] == []
+
+
+async def test_openai_api_validates_as_the_integration_type(
+    setup_clients, models_inputs
+):
+    values = await generate(setup_clients, models_inputs)
+    outputs = await BifrostAppOutputProcessor().generate_outputs(
+        helm_values=values, app_instance_id="bifrost-app"
+    )
+
+    api = OpenAICompatAPI.model_validate(outputs["openai_api"]["internal_url"])
+
+    assert api.get_model_names(OpenAICompatCapability.EMBEDDINGS) == [
+        "vllm/BAAI/bge-small-en-v1.5",
+        "vllm/intfloat/multilingual-e5-small",
+        "openai/text-embedding-3-small",
+    ]
+    assert get_api_base_url(api) == f"http://{INTERNAL_HOST}:8080/v1"

@@ -151,6 +151,108 @@
       "x-title": "Hugging Face Token",
       "x-type": "HuggingFaceToken"
     },
+    "OpenAICompatAPI": {
+      "properties": {
+        "host": {
+          "title": "Host",
+          "type": "string",
+          "x-description": "The hostname of the HTTP endpoint.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Hostname"
+        },
+        "port": {
+          "default": 80,
+          "exclusiveMinimum": 0,
+          "title": "Port",
+          "type": "integer",
+          "x-description": "The port of the HTTP endpoint.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Port"
+        },
+        "protocol": {
+          "default": "http",
+          "title": "Protocol",
+          "type": "string",
+          "x-description": "The protocol to use, e.g., http or https.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Protocol"
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 30.0,
+          "title": "Timeout",
+          "x-description": "Connection timeout in seconds.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Connection Timeout"
+        },
+        "base_path": {
+          "default": "/",
+          "title": "Base Path",
+          "type": "string"
+        },
+        "api_type": {
+          "const": "rest",
+          "default": "rest",
+          "title": "Api Type",
+          "type": "string"
+        },
+        "api_base_path": {
+          "default": "/v1",
+          "title": "Api Base Path",
+          "type": "string"
+        },
+        "models": {
+          "items": {
+            "$ref": "#/$defs/OpenAICompatModel"
+          },
+          "title": "Models",
+          "type": "array",
+          "x-description": "Models the API serves, with the endpoints of each.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Models"
+        },
+        "model_prefixes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Model Prefixes",
+          "type": "array",
+          "x-description": "Prefixes such as openai/: any model name that starts with one is served too.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Model Prefixes"
+        }
+      },
+      "required": [
+        "host"
+      ],
+      "title": "OpenAICompatAPI",
+      "type": "object",
+      "x-description": "OpenAI compatible API that serves several models.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "integration",
+      "x-title": "OpenAI Compatible API",
+      "x-type": "OpenAICompatAPI"
+    },
     "OpenAICompatChatAPI": {
       "properties": {
         "host": {
@@ -363,6 +465,44 @@
       "x-title": "OpenAI Compatible Embeddings API",
       "x-type": "OpenAICompatEmbeddingsAPI"
     },
+    "OpenAICompatModel": {
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string",
+          "x-description": "Name to request the model by.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Model Name"
+        },
+        "capabilities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Capabilities",
+          "type": "array",
+          "x-description": "Endpoints that serve the model, such as chat, completions, responses or embeddings. Other values can appear.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Capabilities"
+        }
+      },
+      "required": [
+        "name",
+        "capabilities"
+      ],
+      "title": "OpenAICompatModel",
+      "type": "object",
+      "x-description": "A model served by an OpenAI compatible API.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "OpenAI Compatible Model",
+      "x-type": "OpenAICompatModel"
+    },
     "RestAPI": {
       "properties": {
         "host": {
@@ -435,6 +575,50 @@
       "x-meta-type": "inline",
       "x-title": "HTTP API",
       "x-type": "RestAPI"
+    },
+    "ServiceAPI_OpenAICompatAPI_": {
+      "properties": {
+        "internal_url": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OpenAICompatAPI"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "x-description": "Internal URL to access the service. This route is not protected by platform authorization and only workloads from the same project can access it.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Internal URL"
+        },
+        "external_url": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OpenAICompatAPI"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "x-description": "External URL for accessing the service from outside the cluster. This route might be secured by platform authorization and is accessible from any network with a valid platform authorization token that has appropriate permissions.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "External URL"
+        }
+      },
+      "title": "ServiceAPI[OpenAICompatAPI]",
+      "type": "object",
+      "x-description": "Service APIs URLs.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "Service APIs",
+      "x-type": "ServiceAPI[OpenAICompatAPI]"
     },
     "ServiceAPI_OpenAICompatChatAPI_": {
       "properties": {
@@ -715,6 +899,22 @@
       "x-is-configurable": true,
       "x-meta-type": "inline",
       "x-title": "Gateway API"
+    },
+    "openai_api": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ServiceAPI_OpenAICompatAPI_"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "x-description": "OpenAI-compatible API of the gateway with the models it serves and the endpoints of each. Usable as an integration by applications that pick models themselves.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "OpenAI Compatible API"
     },
     "chat_apis": {
       "items": {
