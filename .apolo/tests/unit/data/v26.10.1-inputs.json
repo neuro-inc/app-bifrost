@@ -1,0 +1,144 @@
+{
+  "preset": {
+    "name": "gateway-large",
+    "__type__": "Preset"
+  },
+  "networking": {
+    "ingress_http": {
+      "auth": {
+        "type": "apolo_auth",
+        "__type__": "ApoloAuth"
+      },
+      "__type__": "IngressHttp"
+    },
+    "__type__": "BasicNetworkingConfig"
+  },
+  "storage": {
+    "storage_type": "postgres",
+    "credentials": {
+      "user": "bifrost",
+      "password": {
+        "key": "pg-bifrost-password",
+        "__type__": "ApoloSecret"
+      },
+      "host": "pg-app-primary.namespace.svc",
+      "port": 5432,
+      "pgbouncer_host": "pg-app-pgbouncer.namespace.svc",
+      "pgbouncer_port": 5432,
+      "dbname": "bifrost",
+      "pgbouncer_uri": null,
+      "postgres_uri": null,
+      "user_type": "user",
+      "__type__": "CrunchyPostgresUserCredentials"
+    },
+    "__type__": "PostgresStorage"
+  },
+  "security": {
+    "admin_username": "admin",
+    "admin_password": {
+      "key": "bifrost-admin-password",
+      "__type__": "ApoloSecret"
+    },
+    "encryption_key": {
+      "key": "bifrost-encryption-key",
+      "__type__": "ApoloSecret"
+    },
+    "require_virtual_key": true,
+    "__type__": "BifrostSecurity"
+  },
+  "vllm_backends": [
+    {
+      "api": {
+        "host": "llama.namespace",
+        "port": 8000,
+        "protocol": "http",
+        "timeout": 30.0,
+        "base_path": "/",
+        "api_type": "rest",
+        "api_base_path": "/v1",
+        "openai_api_type": "chat",
+        "endpoint_url": "/v1/chat",
+        "hf_model": {
+          "model_hf_name": "meta-llama/Llama-3.1-8B-Instruct",
+          "hf_token": null,
+          "hf_cache": null,
+          "__type__": "HuggingFaceModel"
+        },
+        "__type__": "OpenAICompatChatAPI"
+      },
+      "api_key": {
+        "key": "llama-api-key",
+        "__type__": "ApoloSecret"
+      },
+      "served_model_name": null,
+      "__type__": "VLLMBackend"
+    },
+    {
+      "api": {
+        "host": "llama-second.namespace",
+        "port": 8000,
+        "protocol": "http",
+        "timeout": 30.0,
+        "base_path": "/",
+        "api_type": "rest",
+        "api_base_path": "/v1",
+        "openai_api_type": "chat",
+        "endpoint_url": "/v1/chat",
+        "hf_model": {
+          "model_hf_name": "meta-llama/Llama-3.1-8B-Instruct",
+          "hf_token": null,
+          "hf_cache": null,
+          "__type__": "HuggingFaceModel"
+        },
+        "__type__": "OpenAICompatChatAPI"
+      },
+      "api_key": null,
+      "served_model_name": null,
+      "__type__": "VLLMBackend"
+    },
+    {
+      "api": {
+        "host": "qwen.namespace",
+        "port": 8000,
+        "protocol": "http",
+        "timeout": 30.0,
+        "base_path": "/",
+        "api_type": "rest",
+        "api_base_path": "/v1",
+        "openai_api_type": "chat",
+        "endpoint_url": "/v1/chat",
+        "hf_model": null,
+        "__type__": "OpenAICompatChatAPI"
+      },
+      "api_key": null,
+      "served_model_name": "qwen",
+      "__type__": "VLLMBackend"
+    }
+  ],
+  "providers": [
+    {
+      "provider": "openai",
+      "api_key": {
+        "key": "openai-key",
+        "__type__": "ApoloSecret"
+      },
+      "__type__": "ExternalProvider"
+    },
+    {
+      "provider": "openai",
+      "api_key": {
+        "key": "openai-key-2",
+        "__type__": "ApoloSecret"
+      },
+      "__type__": "ExternalProvider"
+    },
+    {
+      "provider": "anthropic",
+      "api_key": {
+        "key": "anthropic-key",
+        "__type__": "ApoloSecret"
+      },
+      "__type__": "ExternalProvider"
+    }
+  ]
+}

@@ -1,5 +1,10 @@
 # Changelog
 
+## v26.10.2
+
+- Embeddings backends: vLLM or Text Embeddings Inference applications, published as `embeddings_apis`.
+- Chat and embeddings models of hosted providers, published as `chat_apis` and `embeddings_apis`.
+
 ## v26.10.1
 
 - Catalog logo.

@@ -9,10 +9,11 @@ from apolo_app_types.helm.apps.common import gen_extra_values
 from apolo_app_types.protocols.common import ApoloSecret
 from apolo_app_types.protocols.common.secrets_ import serialize_optional_secret
 from apolo_apps_bifrost.app_types import (
+    VLLM_PROVIDER,
     BifrostAppInputs,
     ExternalProvider,
+    ModelBackend,
     PostgresStorage,
-    VLLMBackend,
 )
 
 
@@ -23,7 +24,7 @@ GO_MEMORY_LIMIT_RATIO = 0.9
 MEMORY_MIB_PER_BODY_MB = 25
 MAX_REQUEST_BODY_MB = 100
 MIN_MEMORY_MIB = 480
-VLLM_PROVIDER = "vllm"
+GATEWAY_MODELS_KEY = "gateway_models"
 KEY_NAME_PREFIX_LENGTH = 80
 KEY_NAME_DIGEST_LENGTH = 12
 PLACEHOLDER_KEY_NAME = "no-backends"
@@ -89,7 +90,7 @@ class _KeyNames:
 
 
 def _build_vllm_provider(
-    backends: list[VLLMBackend], secrets: _ProviderSecrets, names: _KeyNames
+    backends: list[ModelBackend], secrets: _ProviderSecrets, names: _KeyNames
 ) -> dict[str, t.Any]:
     keys = []
     for backend in backends:
@@ -200,16 +201,16 @@ class BifrostAppChartValueProcessor(BaseChartValueProcessor[BifrostAppInputs]):
         secrets = _ProviderSecrets(app_secrets_name)
         names = _KeyNames()
         providers = _build_external_providers(input_.providers, secrets, names)
-        if input_.vllm_backends:
-            providers[VLLM_PROVIDER] = _build_vllm_provider(
-                input_.vllm_backends, secrets, names
-            )
+        backends = [*input_.vllm_backends, *input_.embedding_backends]
+        if backends:
+            providers[VLLM_PROVIDER] = _build_vllm_provider(backends, secrets, names)
         if not providers:
             providers[VLLM_PROVIDER] = _build_vllm_placeholder()
 
         security = input_.security
         return {
             "apolo_app_id": extra_values["apolo_app_id"],
+            GATEWAY_MODELS_KEY: input_.gateway_models,
             "bifrost": {
                 "fullnameOverride": get_fullname(app_id),
                 "resources": extra_values["resources"],

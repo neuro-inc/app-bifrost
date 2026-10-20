@@ -14,10 +14,11 @@
     types_name: BifrostAppOutputs
     processor: BifrostAppOutputProcessor
     image: ghcr.io/neuro-inc/app-bifrost
-  short_description: Route LLM requests through one gateway
+  short_description: Route LLM and embeddings requests through one gateway
   description: |
-    Bifrost is an AI gateway that puts vLLM applications of the project and hosted
-    model providers behind a single OpenAI-compatible API.
+    Bifrost is an AI gateway that puts vLLM and Text Embeddings Inference
+    applications of the project and hosted model providers behind a single
+    OpenAI-compatible API for chat, completions, responses and embeddings.
 
     It adds virtual keys with budgets and rate limits, failover and load balancing
     between backends, and a dashboard with request logs.
@@ -30,6 +31,7 @@
     - "Gateway"
     - "Inference"
     - "vLLM"
+    - "Embeddings"
     - "OpenAI"
   urls:
     - name: Bifrost documentation

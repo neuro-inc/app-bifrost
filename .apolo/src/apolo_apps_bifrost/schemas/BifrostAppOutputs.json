@@ -257,6 +257,112 @@
       "x-title": "OpenAI Compatible Chat API",
       "x-type": "OpenAICompatChatAPI"
     },
+    "OpenAICompatEmbeddingsAPI": {
+      "properties": {
+        "host": {
+          "title": "Host",
+          "type": "string",
+          "x-description": "The hostname of the HTTP endpoint.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Hostname"
+        },
+        "port": {
+          "default": 80,
+          "exclusiveMinimum": 0,
+          "title": "Port",
+          "type": "integer",
+          "x-description": "The port of the HTTP endpoint.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Port"
+        },
+        "protocol": {
+          "default": "http",
+          "title": "Protocol",
+          "type": "string",
+          "x-description": "The protocol to use, e.g., http or https.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Protocol"
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 30.0,
+          "title": "Timeout",
+          "x-description": "Connection timeout in seconds.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Connection Timeout"
+        },
+        "base_path": {
+          "default": "/",
+          "title": "Base Path",
+          "type": "string"
+        },
+        "api_type": {
+          "const": "rest",
+          "default": "rest",
+          "title": "Api Type",
+          "type": "string"
+        },
+        "api_base_path": {
+          "default": "/v1",
+          "title": "Api Base Path",
+          "type": "string"
+        },
+        "openai_api_type": {
+          "const": "embeddings",
+          "default": "embeddings",
+          "title": "Openai Api Type",
+          "type": "string"
+        },
+        "endpoint_url": {
+          "const": "/v1/embeddings",
+          "default": "/v1/embeddings",
+          "title": "Endpoint Url",
+          "type": "string"
+        },
+        "hf_model": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HuggingFaceModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "x-description": "Configure the Hugging Face model. Ensure it is available on the Hugging Face Hub and provide an API token with access rights if the repository is gated.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "integration",
+          "x-title": "Hugging Face Model"
+        }
+      },
+      "required": [
+        "host"
+      ],
+      "title": "OpenAICompatEmbeddingsAPI",
+      "type": "object",
+      "x-description": "Configuration for OpenAI compatible embeddings API.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "integration",
+      "x-title": "OpenAI Compatible Embeddings API",
+      "x-type": "OpenAICompatEmbeddingsAPI"
+    },
     "RestAPI": {
       "properties": {
         "host": {
@@ -373,6 +479,50 @@
       "x-meta-type": "inline",
       "x-title": "Service APIs",
       "x-type": "ServiceAPI[OpenAICompatChatAPI]"
+    },
+    "ServiceAPI_OpenAICompatEmbeddingsAPI_": {
+      "properties": {
+        "internal_url": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OpenAICompatEmbeddingsAPI"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "x-description": "Internal URL to access the service. This route is not protected by platform authorization and only workloads from the same project can access it.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "Internal URL"
+        },
+        "external_url": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OpenAICompatEmbeddingsAPI"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "x-description": "External URL for accessing the service from outside the cluster. This route might be secured by platform authorization and is accessible from any network with a valid platform authorization token that has appropriate permissions.",
+          "x-is-advanced-field": false,
+          "x-is-configurable": true,
+          "x-meta-type": "inline",
+          "x-title": "External URL"
+        }
+      },
+      "title": "ServiceAPI[OpenAICompatEmbeddingsAPI]",
+      "type": "object",
+      "x-description": "Service APIs URLs.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "Service APIs",
+      "x-type": "ServiceAPI[OpenAICompatEmbeddingsAPI]"
     },
     "ServiceAPI_RestAPI_": {
       "properties": {
@@ -572,11 +722,23 @@
       },
       "title": "Chat Apis",
       "type": "array",
-      "x-description": "Chat API of each vLLM model served through the gateway.",
+      "x-description": "Chat API of each chat model served through the gateway.",
       "x-is-advanced-field": false,
       "x-is-configurable": true,
       "x-meta-type": "inline",
       "x-title": "Chat APIs"
+    },
+    "embeddings_apis": {
+      "items": {
+        "$ref": "#/$defs/ServiceAPI_OpenAICompatEmbeddingsAPI_"
+      },
+      "title": "Embeddings Apis",
+      "type": "array",
+      "x-description": "Embeddings API of each embeddings model served through the gateway.",
+      "x-is-advanced-field": false,
+      "x-is-configurable": true,
+      "x-meta-type": "inline",
+      "x-title": "Embeddings APIs"
     },
     "admin_username": {
       "anyOf": [

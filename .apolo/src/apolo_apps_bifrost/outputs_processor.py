@@ -6,12 +6,13 @@ from apolo_app_types.protocols.common import (
     ApoloSecret,
     HuggingFaceModel,
     OpenAICompatChatAPI,
+    OpenAICompatEmbeddingsAPI,
     RestAPI,
     ServiceAPI,
 )
 from apolo_app_types.protocols.common.networking import WebApp
-from apolo_apps_bifrost.app_types import BifrostAppOutputs
-from apolo_apps_bifrost.inputs_processor import ADMIN_PASSWORD_ENV, VLLM_PROVIDER
+from apolo_apps_bifrost.app_types import VLLM_PROVIDER, BifrostAppOutputs
+from apolo_apps_bifrost.inputs_processor import ADMIN_PASSWORD_ENV, GATEWAY_MODELS_KEY
 
 
 BIFROST_PORT = 8080
@@ -45,6 +46,42 @@ def _get_vllm_models(chart_values: dict[str, t.Any]) -> list[str]:
     return models
 
 
+def _get_gateway_models(
+    helm_values: dict[str, t.Any], chart_values: dict[str, t.Any]
+) -> dict[str, list[str]]:
+    models = helm_values.get(GATEWAY_MODELS_KEY)
+    if models is None:
+        return {
+            "chat": [
+                f"{VLLM_PROVIDER}/{model}" for model in _get_vllm_models(chart_values)
+            ],
+            "embeddings": [],
+        }
+    return t.cast(dict[str, list[str]], models)
+
+
+def _get_model_apis[ModelAPI: (OpenAICompatChatAPI, OpenAICompatEmbeddingsAPI)](
+    service_type: type[ServiceAPI[ModelAPI]],
+    models: list[str],
+    internal: dict[str, t.Any],
+    external: dict[str, t.Any] | None,
+) -> list[ServiceAPI[ModelAPI]]:
+    apis = []
+    for model in models:
+        hf_model = HuggingFaceModel(model_hf_name=model)
+        apis.append(
+            service_type.model_validate(
+                {
+                    "internal_url": {**internal, "hf_model": hf_model},
+                    "external_url": {**external, "hf_model": hf_model}
+                    if external
+                    else None,
+                }
+            )
+        )
+    return apis
+
+
 class BifrostAppOutputProcessor(BaseAppOutputsProcessor[BifrostAppOutputs]):
     async def _generate_outputs(
         self,
@@ -64,17 +101,7 @@ class BifrostAppOutputProcessor(BaseAppOutputsProcessor[BifrostAppOutputs]):
             else None
         )
 
-        chat_apis = []
-        for model in _get_vllm_models(chart_values):
-            hf_model = HuggingFaceModel(model_hf_name=f"{VLLM_PROVIDER}/{model}")
-            chat_apis.append(
-                ServiceAPI[OpenAICompatChatAPI](
-                    internal_url=OpenAICompatChatAPI(**internal, hf_model=hf_model),
-                    external_url=OpenAICompatChatAPI(**external, hf_model=hf_model)
-                    if external
-                    else None,
-                )
-            )
+        models = _get_gateway_models(helm_values, chart_values)
 
         auth_config = (chart_values.get("bifrost") or {}).get("authConfig") or {}
         return BifrostAppOutputs(
@@ -88,7 +115,18 @@ class BifrostAppOutputProcessor(BaseAppOutputsProcessor[BifrostAppOutputs]):
                 if external
                 else None,
             ),
-            chat_apis=chat_apis,
+            chat_apis=_get_model_apis(
+                ServiceAPI[OpenAICompatChatAPI],
+                models.get("chat", []),
+                internal,
+                external,
+            ),
+            embeddings_apis=_get_model_apis(
+                ServiceAPI[OpenAICompatEmbeddingsAPI],
+                models.get("embeddings", []),
+                internal,
+                external,
+            ),
             admin_username=auth_config.get("adminUsername"),
             admin_password=_get_admin_password(chart_values),
         )

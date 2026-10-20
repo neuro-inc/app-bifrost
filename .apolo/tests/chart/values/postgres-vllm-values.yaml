@@ -1,3 +1,9 @@
+gateway_models:
+  chat:
+    - vllm/meta-llama/Llama-3.1-8B-Instruct
+    - vllm/Qwen/Qwen2.5-7B-Instruct
+  embeddings:
+    - vllm/BAAI/bge-small-en-v1.5
 bifrost:
   fullnameOverride: bifrost-ci
   resources:
@@ -69,5 +75,13 @@ bifrost:
             vllm_key_config:
               url: http://llm-inference-ci-2.example.svc:8000
               model_name: Qwen/Qwen2.5-7B-Instruct
+          - name: bge-small-en-v1-5
+            value: ""
+            models:
+              - BAAI/bge-small-en-v1.5
+            weight: 1
+            vllm_key_config:
+              url: http://text-embeddings-ci.example.svc:80
+              model_name: BAAI/bge-small-en-v1.5
         network_config:
           allow_private_network: true

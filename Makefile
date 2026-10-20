@@ -36,7 +36,7 @@ test-unit:
 test-helm:
 	helm repo add bifrost https://maximhq.github.io/bifrost/helm-charts --force-update
 	helm dependency build $(CHART_DIR)
-	for values in $(CHART_DIR)/ci/*.yaml; do \
+	for values in .apolo/tests/chart/values/*.yaml; do \
 		helm lint $(CHART_DIR) -f $$values; \
 		helm template bifrost $(CHART_DIR) -f $$values > /dev/null; \
 	done

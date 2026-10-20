@@ -172,3 +172,31 @@ async def test_postgres_release_with_backends(setup_clients, full_inputs, tmp_pa
     ]
     rendered = json.dumps(config)
     assert "apps-secrets" not in rendered
+
+
+async def test_embeddings_release(setup_clients, models_inputs, tmp_path):
+    values = await generate(setup_clients, models_inputs)
+    manifests = render(values, tmp_path)
+
+    config = get_config(manifests)
+    assert set(config["providers"]) == {"openai", "anthropic", "vllm"}
+    assert config["providers"]["openai"]["keys"][0]["models"] == ["*"]
+    assert [
+        (key["models"], key["vllm_key_config"]["url"])
+        for key in config["providers"]["vllm"]["keys"]
+    ] == [
+        (["meta-llama/Llama-3.1-8B-Instruct"], "http://llama.namespace:8000"),
+        (["meta-llama/Llama-3.1-8B-Instruct"], "http://llama-second.namespace:8000"),
+        (["qwen"], "http://qwen.namespace:8000"),
+        (["BAAI/bge-small-en-v1.5"], "http://tei.namespace:80"),
+        (["intfloat/multilingual-e5-small"], "http://vllm-embed.namespace:8000"),
+    ]
+    env = {
+        item["name"]: item
+        for item in get_container(manifests[("Deployment", f"bifrost-{APP_ID}")])["env"]
+    }
+    assert env["BIFROST_PROVIDER_KEY_4"]["valueFrom"]["secretKeyRef"] == {
+        "name": "apps-secrets",
+        "key": "e5-api-key",
+    }
+    assert all("gateway_models" not in json.dumps(doc) for doc in manifests.values())
