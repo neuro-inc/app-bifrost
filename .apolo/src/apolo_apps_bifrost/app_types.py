@@ -461,10 +461,3 @@ class BifrostAppOutputs(AppOutputs):
             description="Login for the dashboard and the management API.",
         ).as_json_schema_extra(),
     )
-    admin_password: ApoloSecret | None = Field(
-        default=None,
-        json_schema_extra=SchemaExtraMetadata(
-            title="Admin Password",
-            description="Password for the dashboard and the management API.",
-        ).as_json_schema_extra(),
-    )

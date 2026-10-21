@@ -2,10 +2,15 @@ import json
 from pathlib import Path
 
 from apolo_app_types_fixtures.constants import APP_ID
-from apolo_apps_bifrost.app_types import BifrostAppInputs
+from apolo_apps_bifrost.app_types import BifrostAppInputs, BifrostAppOutputs
 from apolo_apps_bifrost.outputs_processor import BifrostAppOutputProcessor
 
-from apolo_app_types.protocols.common import OpenAICompatAPI, OpenAICompatCapability
+from apolo_app_types.outputs.utils.type_search import find_instances_recursive_simple
+from apolo_app_types.protocols.common import (
+    ApoloSecret,
+    OpenAICompatAPI,
+    OpenAICompatCapability,
+)
 from apolo_app_types.protocols.common.openai_compat import get_api_base_url
 
 from ..conftest import NAMESPACE
@@ -19,6 +24,12 @@ DATA = Path(__file__).parent / "data"
 
 def load(name):
     return json.loads((DATA / name).read_text())
+
+
+def v26_10_1_outputs():
+    outputs = load("v26.10.1-outputs.json")
+    del outputs["admin_password"]
+    return outputs
 
 
 def model_names(apis):
@@ -65,7 +76,29 @@ async def test_outputs_from_generated_values(setup_clients, full_inputs):
     assert outputs["gateway_api"]["internal_url"]["base_path"] == "/v1"
     assert outputs["gateway_api"]["external_url"]["host"] == EXTERNAL_HOST
     assert outputs["admin_username"] == "admin"
-    assert outputs["admin_password"]["key"] == "bifrost-admin-password"
+    assert "admin_password" not in outputs
+
+
+async def test_outputs_hold_no_input_secrets(setup_clients, models_inputs):
+    values = await generate(setup_clients, models_inputs)
+
+    outputs = await BifrostAppOutputProcessor().generate_outputs(
+        helm_values=values, app_instance_id="bifrost-app"
+    )
+
+    assert (
+        find_instances_recursive_simple(
+            obj=BifrostAppOutputs.model_validate(outputs), target_type=ApoloSecret
+        )
+        == []
+    )
+
+
+def test_v26_10_1_stored_outputs_hold_no_secrets_to_clean_up():
+    outputs = BifrostAppOutputs.model_validate(load("v26.10.1-outputs.json"))
+
+    assert find_instances_recursive_simple(obj=outputs, target_type=ApoloSecret) == []
+    assert outputs.admin_username == "admin"
 
 
 async def test_one_chat_api_per_model(setup_clients, full_inputs):
@@ -151,7 +184,7 @@ async def test_embeddings_and_provider_models(setup_clients, models_inputs):
 async def test_v26_10_1_inputs_keep_their_values_and_outputs(setup_clients):
     inputs = BifrostAppInputs.model_validate(load("v26.10.1-inputs.json"))
     expected_values = load("v26.10.1-values.json")
-    expected_outputs = load("v26.10.1-outputs.json")
+    expected_outputs = v26_10_1_outputs()
 
     values = await generate(setup_clients, inputs)
     outputs = await BifrostAppOutputProcessor().generate_outputs(
@@ -178,7 +211,7 @@ async def test_outputs_from_v26_10_1_values():
     openai_api = outputs.pop("openai_api")
     assert openai_api["internal_url"]["models"] == V26_10_1_OPENAI_MODELS
     assert openai_api["external_url"]["models"] == V26_10_1_OPENAI_MODELS
-    assert outputs == load("v26.10.1-outputs.json")
+    assert outputs == v26_10_1_outputs()
 
 
 async def test_openai_api_lists_every_model_with_its_capabilities(

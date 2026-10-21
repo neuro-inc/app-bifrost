@@ -3,7 +3,6 @@ import typing as t
 from apolo_app_types.clients.kube import get_current_namespace
 from apolo_app_types.outputs.base import BaseAppOutputsProcessor
 from apolo_app_types.protocols.common import (
-    ApoloSecret,
     HuggingFaceModel,
     OpenAICompatAPI,
     OpenAICompatCapability,
@@ -15,7 +14,7 @@ from apolo_app_types.protocols.common import (
 )
 from apolo_app_types.protocols.common.networking import WebApp
 from apolo_apps_bifrost.app_types import VLLM_PROVIDER, BifrostAppOutputs
-from apolo_apps_bifrost.inputs_processor import ADMIN_PASSWORD_ENV, GATEWAY_MODELS_KEY
+from apolo_apps_bifrost.inputs_processor import GATEWAY_MODELS_KEY
 
 
 BIFROST_PORT = 8080
@@ -36,13 +35,6 @@ def _get_external_host(chart_values: dict[str, t.Any]) -> str | None:
     if not ingress.get("enabled") or not hosts:
         return None
     return t.cast(str, hosts[0]["host"])
-
-
-def _get_admin_password(chart_values: dict[str, t.Any]) -> ApoloSecret | None:
-    for env in chart_values.get("env") or []:
-        if env.get("name") == ADMIN_PASSWORD_ENV:
-            return ApoloSecret(key=env["valueFrom"]["secretKeyRef"]["key"])
-    return None
 
 
 def _get_vllm_models(chart_values: dict[str, t.Any]) -> list[str]:
@@ -164,5 +156,4 @@ class BifrostAppOutputProcessor(BaseAppOutputsProcessor[BifrostAppOutputs]):
                 external,
             ),
             admin_username=auth_config.get("adminUsername"),
-            admin_password=_get_admin_password(chart_values),
         )

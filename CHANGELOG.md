@@ -1,5 +1,9 @@
 # Changelog
 
+## v26.10.4
+
+- Uninstalling the app no longer deletes the secret selected as the admin password, which is no longer published in the outputs. An instance installed with an earlier version is covered once it is upgraded to this version.
+
 ## v26.10.3
 
 - `openai_api`: the gateway as one `OpenAICompatAPI` integration with every model and its capabilities, for OpenWebUI and other applications that pick models themselves.
