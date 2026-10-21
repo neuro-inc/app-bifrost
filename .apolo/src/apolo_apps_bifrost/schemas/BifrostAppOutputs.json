@@ -944,22 +944,6 @@
       "x-is-configurable": true,
       "x-meta-type": "inline",
       "x-title": "Admin Username"
-    },
-    "admin_password": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/ApoloSecret"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "x-description": "Password for the dashboard and the management API.",
-      "x-is-advanced-field": false,
-      "x-is-configurable": true,
-      "x-meta-type": "inline",
-      "x-title": "Admin Password"
     }
   },
   "title": "BifrostAppOutputs",
