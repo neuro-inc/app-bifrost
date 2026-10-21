@@ -1,5 +1,9 @@
 # Changelog
 
+## v26.10.3
+
+- `openai_api`: the gateway as one `OpenAICompatAPI` integration with every model and its capabilities, for OpenWebUI and other applications that pick models themselves.
+
 ## v26.10.2
 
 - Embeddings backends: vLLM or Text Embeddings Inference applications, published as `embeddings_apis`.

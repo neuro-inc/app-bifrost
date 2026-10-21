@@ -5,8 +5,11 @@ from apolo_app_types.outputs.base import BaseAppOutputsProcessor
 from apolo_app_types.protocols.common import (
     ApoloSecret,
     HuggingFaceModel,
+    OpenAICompatAPI,
+    OpenAICompatCapability,
     OpenAICompatChatAPI,
     OpenAICompatEmbeddingsAPI,
+    OpenAICompatModel,
     RestAPI,
     ServiceAPI,
 )
@@ -18,6 +21,13 @@ from apolo_apps_bifrost.inputs_processor import ADMIN_PASSWORD_ENV, GATEWAY_MODE
 BIFROST_PORT = 8080
 INGRESS_PORT = 443
 API_BASE_PATH = "/v1"
+VLLM_CHAT_CAPABILITIES = [
+    OpenAICompatCapability.CHAT,
+    OpenAICompatCapability.COMPLETIONS,
+    OpenAICompatCapability.RESPONSES,
+]
+PROVIDER_CHAT_CAPABILITIES = [OpenAICompatCapability.CHAT]
+EMBEDDINGS_CAPABILITIES = [OpenAICompatCapability.EMBEDDINGS]
 
 
 def _get_external_host(chart_values: dict[str, t.Any]) -> str | None:
@@ -58,6 +68,25 @@ def _get_gateway_models(
             "embeddings": [],
         }
     return t.cast(dict[str, list[str]], models)
+
+
+def _get_openai_models(models: dict[str, list[str]]) -> list[OpenAICompatModel]:
+    vllm_prefix = f"{VLLM_PROVIDER}/"
+    return [
+        *(
+            OpenAICompatModel(
+                name=name,
+                capabilities=VLLM_CHAT_CAPABILITIES
+                if name.startswith(vllm_prefix)
+                else PROVIDER_CHAT_CAPABILITIES,
+            )
+            for name in models.get("chat", [])
+        ),
+        *(
+            OpenAICompatModel(name=name, capabilities=EMBEDDINGS_CAPABILITIES)
+            for name in models.get("embeddings", [])
+        ),
+    ]
 
 
 def _get_model_apis[ModelAPI: (OpenAICompatChatAPI, OpenAICompatEmbeddingsAPI)](
@@ -102,6 +131,7 @@ class BifrostAppOutputProcessor(BaseAppOutputsProcessor[BifrostAppOutputs]):
         )
 
         models = _get_gateway_models(helm_values, chart_values)
+        openai_models = _get_openai_models(models)
 
         auth_config = (chart_values.get("bifrost") or {}).get("authConfig") or {}
         return BifrostAppOutputs(
@@ -112,6 +142,12 @@ class BifrostAppOutputProcessor(BaseAppOutputsProcessor[BifrostAppOutputs]):
             gateway_api=ServiceAPI[RestAPI](
                 internal_url=RestAPI(**internal, base_path=API_BASE_PATH),
                 external_url=RestAPI(**external, base_path=API_BASE_PATH)
+                if external
+                else None,
+            ),
+            openai_api=ServiceAPI[OpenAICompatAPI](
+                internal_url=OpenAICompatAPI(**internal, models=openai_models),
+                external_url=OpenAICompatAPI(**external, models=openai_models)
                 if external
                 else None,
             ),

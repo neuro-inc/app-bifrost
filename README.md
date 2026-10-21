@@ -38,6 +38,7 @@ Providers are managed by the inputs only. The gateway runs with `source_of_truth
 | --- | --- |
 | `app_url` | Dashboard. |
 | `gateway_api` | OpenAI-compatible API for every configured model, `/v1`. |
+| `openai_api` | The same API as one integration of type `OpenAICompatAPI`, with every published model and what it serves: `chat`, `completions` and `responses` for the vLLM chat backends, `chat` for the chat models of the providers, `embeddings` for the embeddings models. For applications that pick models themselves, such as OpenWebUI. |
 | `chat_apis` | One chat API per chat model: the vLLM chat backends first, then the chat models listed for the providers. Usable as an integration by other applications. The model name carries the provider prefix, `vllm/` for the backends. |
 | `embeddings_apis` | One embeddings API per embeddings model: the embeddings backends, then the embeddings models listed for the providers. |
 | `admin_username`, `admin_password` | Dashboard login. |
