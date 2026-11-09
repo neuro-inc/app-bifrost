@@ -18,7 +18,7 @@ packages = [
 
 [tool.poetry.dependencies]
 apolo-sdk = "^26.11.2"
-pydantic = "^2.14.2"
+pydantic = "^2.14.3"
 apolo-app-types = {version = "26.11.0", extras = ["fixtures"]}
 
 [tool.poetry.group.dev]
