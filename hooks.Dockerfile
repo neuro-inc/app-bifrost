@@ -1,4 +1,4 @@
-FROM python:3.15.0-slim
+FROM python:3.15.2-slim
 
 LABEL org.opencontainers.image.source="https://github.com/neuro-inc/app-bifrost"
 
